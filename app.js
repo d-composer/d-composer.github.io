@@ -22,6 +22,20 @@ const CLASS_COLORS = {
   other: "#9aa1aa",
 };
 
+const PIANO_ROLL_PANEL_FILL = "#F6F8F8";
+const PIANO_ROLL_BORDER = "#5E5E5E";
+const PIANO_ROLL_GRID = "rgba(0, 0, 0, 0.16)";
+const PIANO_ROLL_ROW_DARK = "#F1F1F1";
+const PIANO_ROLL_ROW_LIGHT = "#FFFFFF";
+const PIANO_ROLL_TEXT = "#5E5E5E";
+const ONESHOT_CLASS_STYLES = {
+  kick: { fill: "#E8D9FD", border: "#893DF6" },
+  snare: { fill: "#D8E8D3", border: "#3F8C27" },
+  tom: { fill: "#E6EEF9", border: "#628AD8" },
+  hat: { fill: "#FBDAE9", border: "#EB4691" },
+  cymbal: { fill: "#DDF3F1", border: "#35A39A" },
+};
+
 const FULL_ROWS = [
   { note: 71, label: "other" },
   { note: 70, label: "shaker" },
@@ -53,6 +67,7 @@ const DATASET_LABELS = {
 
 const DATASET_ORDER = ["musdb", "e_gmd", "mdb_drums", "fsl10k", "synthetic"];
 const TARGET_CLASSES = ["kick", "snare", "tom", "hat", "cymbal"];
+const USE_CUSTOM_AUDIO_PLAYER = false;
 const DCOMPOSER_LABELS = new Map([
   [71, "other"],
   [70, "shaker"],
@@ -100,8 +115,39 @@ function rowLabelForLane(role, row) {
   return row.label;
 }
 
+function displayMethodName(name) {
+  if (name === "D-Composer") return "D-Composer (Ours)";
+  return name;
+}
+
+function metricNode(loss) {
+  const node = el("div", "meta");
+  if (loss != null) {
+    node.textContent = `MSL: ${fmt(loss)}`;
+  } else {
+    node.textContent = "MSL: 0.000";
+    node.classList.add("metric-empty");
+  }
+  return node;
+}
+
+function createSiteAudioPlayer(src, opts = {}) {
+  if (USE_CUSTOM_AUDIO_PLAYER && window.AudioPlayer?.createAudioPlayer) {
+    return window.AudioPlayer.createAudioPlayer({ src, ...opts });
+  }
+  if (window.AudioPlayer?.createNativeAudioPlayer) {
+    return window.AudioPlayer.createNativeAudioPlayer({ src, className: opts.className || "" });
+  }
+  const audio = document.createElement("audio");
+  audio.controls = true;
+  audio.src = src;
+  if (opts.className) audio.className = opts.className;
+  return audio;
+}
+
 function buildPlayPauseButton(audio, opts = {}) {
   const beforePlay = opts.beforePlay || (() => {});
+  const iconOnly = opts.iconOnly || false;
   const btn = el("button", "icon-btn");
   btn.setAttribute("type", "button");
   const playSvg = `
@@ -114,7 +160,9 @@ function buildPlayPauseButton(audio, opts = {}) {
       <rect x="13" y="6" width="4" height="12"></rect>
     </svg>`;
   function sync() {
-    btn.innerHTML = `${audio.paused ? playSvg : pauseSvg}<span>${audio.paused ? "Play" : "Pause"}</span>`;
+    btn.innerHTML = iconOnly
+      ? `${audio.paused ? playSvg : pauseSvg}`
+      : `${audio.paused ? playSvg : pauseSvg}<span>${audio.paused ? "Play" : "Pause"}</span>`;
   }
   audio.preload = "auto";
   btn.addEventListener("click", () => {
@@ -139,6 +187,17 @@ function makeAudioLink(path, label = "play") {
     const audio = new Audio(path);
     audio.play();
   });
+  return btn;
+}
+
+function buildCarouselArrow(direction) {
+  const btn = el("button", "carousel-btn");
+  btn.setAttribute("type", "button");
+  const isPrev = direction === "prev";
+  btn.innerHTML = `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="${isPrev ? "M 14.5 5.5 L 8 12 L 14.5 18.5" : "M 9.5 5.5 L 16 12 L 9.5 18.5"}"></path>
+    </svg>`;
   return btn;
 }
 
@@ -176,13 +235,13 @@ function hexToRgba(hex, alpha) {
 function buildPianoRoll(lane, allRows) {
   const panel = el("div", "roll-card");
   const head = el("div", "roll-head");
-  head.appendChild(el("h4", "", lane.name));
+  head.appendChild(el("h4", "", displayMethodName(lane.name)));
   const audio = new Audio(lane.audio);
   audio.preload = "auto";
   audio.load();
   let desiredTime = 0;
   const controls = el("div", "roll-controls");
-  controls.appendChild(el("span", "fine-print", "Click notes to listen to predicted one-shots"));
+  controls.appendChild(el("span", "fine-print roll-fine-print", "Click notes to listen to predicted one-shots"));
   controls.appendChild(buildPlayPauseButton(audio, {
     beforePlay: () => {
       if (Math.abs(audio.currentTime - desiredTime) > 0.02) {
@@ -216,14 +275,14 @@ function buildPianoRoll(lane, allRows) {
     bg.setAttribute("y", String(y));
     bg.setAttribute("width", String(usableW));
     bg.setAttribute("height", String(rowH));
-    bg.setAttribute("fill", idx % 2 === 0 ? "#ffffff" : "#f4f5f3");
+    bg.setAttribute("fill", idx % 2 === 0 ? PIANO_ROLL_ROW_LIGHT : PIANO_ROLL_ROW_DARK);
     bg.style.pointerEvents = "none";
     svg.appendChild(bg);
 
     const label = document.createElementNS(svg.namespaceURI, "text");
     label.setAttribute("x", "14");
     label.setAttribute("y", String(y + 16));
-    label.setAttribute("fill", "#394450");
+    label.setAttribute("fill", PIANO_ROLL_TEXT);
     label.setAttribute("font-size", "12");
     label.setAttribute("font-weight", "700");
     label.setAttribute("font-family", "Arial, Helvetica, sans-serif");
@@ -231,14 +290,6 @@ function buildPianoRoll(lane, allRows) {
     label.textContent = rowLabelForLane(lane.role, row);
     svg.appendChild(label);
 
-    const line = document.createElementNS(svg.namespaceURI, "line");
-    line.setAttribute("x1", String(left));
-    line.setAttribute("x2", String(left + usableW));
-    line.setAttribute("y1", String(y + rowH));
-    line.setAttribute("y2", String(y + rowH));
-    line.setAttribute("stroke", "rgba(31,41,55,0.10)");
-    line.style.pointerEvents = "none";
-    svg.appendChild(line);
   });
 
   for (let i = 0; i <= 8; i++) {
@@ -248,14 +299,15 @@ function buildPianoRoll(lane, allRows) {
     tick.setAttribute("x2", String(x));
     tick.setAttribute("y1", String(top));
     tick.setAttribute("y2", String(top + rowH * allRows.length));
-    tick.setAttribute("stroke", i % 2 === 0 ? "rgba(31,41,55,0.18)" : "rgba(31,41,55,0.08)");
+    tick.setAttribute("stroke", PIANO_ROLL_GRID);
+    tick.setAttribute("stroke-width", "1.5");
     tick.style.pointerEvents = "none";
     svg.appendChild(tick);
     if (i < 8) {
       const label = document.createElementNS(svg.namespaceURI, "text");
       label.setAttribute("x", String(x + 2));
       label.setAttribute("y", "15");
-      label.setAttribute("fill", "#6b7280");
+      label.setAttribute("fill", PIANO_ROLL_TEXT);
       label.setAttribute("font-size", "12");
       label.setAttribute("font-family", "Arial, Helvetica, sans-serif");
       label.style.pointerEvents = "none";
@@ -263,6 +315,17 @@ function buildPianoRoll(lane, allRows) {
       svg.appendChild(label);
     }
   }
+
+  const border = document.createElementNS(svg.namespaceURI, "rect");
+  border.setAttribute("x", String(left));
+  border.setAttribute("y", String(top));
+  border.setAttribute("width", String(usableW));
+  border.setAttribute("height", String(rowH * allRows.length));
+  border.setAttribute("fill", "none");
+  border.setAttribute("stroke", PIANO_ROLL_GRID);
+  border.setAttribute("stroke-width", "1.5");
+  border.style.pointerEvents = "none";
+  svg.appendChild(border);
 
   const rowIndex = new Map(allRows.map((r, i) => [r.note, i]));
   const scrubber = document.createElementNS(svg.namespaceURI, "rect");
@@ -287,24 +350,24 @@ function buildPianoRoll(lane, allRows) {
     rect.setAttribute("height", "18");
     rect.setAttribute("fill", hexToRgba(color, 0.16));
     rect.setAttribute("stroke", color);
-    rect.setAttribute("stroke-width", "2.4");
+    rect.setAttribute("stroke-width", "3");
     rect.style.cursor = ev.audio ? "pointer" : "default";
     rect.addEventListener("mouseenter", () => {
       rect.setAttribute("fill", hexToRgba(color, 0.28));
-      rect.setAttribute("stroke-width", "3.4");
+      rect.setAttribute("stroke-width", "4.2");
     });
     rect.addEventListener("mouseleave", () => {
       rect.setAttribute("fill", hexToRgba(color, 0.16));
-      rect.setAttribute("stroke-width", "2.4");
+      rect.setAttribute("stroke-width", "3");
     });
     if (ev.audio) {
       rect.addEventListener("click", (e) => {
         e.stopPropagation();
         rect.setAttribute("fill", hexToRgba(color, 0.38));
-        rect.setAttribute("stroke-width", "4.0");
+        rect.setAttribute("stroke-width", "4.8");
         setTimeout(() => {
           rect.setAttribute("fill", hexToRgba(color, 0.16));
-          rect.setAttribute("stroke-width", "2.4");
+          rect.setAttribute("stroke-width", "3");
         }, 300);
         const shot = new Audio(ev.audio);
         shot.play();
@@ -388,18 +451,18 @@ function buildPianoRoll(lane, allRows) {
   return panel;
 }
 
-function buildDatasetCarousel(dataset, examples, renderer) {
+function buildDatasetCarousel(dataset, examples, renderer, opts = {}) {
   let idx = 0;
-  const card = el("div", "card");
+  let maxStageHeight = 0;
+  const card = el("div", opts.bare ? "dataset-widget" : "card");
   const head = el("div", "card-header");
   head.appendChild(el("h3", "", `Dataset: ${datasetLabel(dataset)}`));
-  head.appendChild(el("div", "pill", `${examples.length} examples`));
   card.appendChild(head);
 
   const nav = el("div", "carousel-nav");
-  const prev = el("button", "carousel-btn", "←");
-  const status = el("div", "meta");
-  const next = el("button", "carousel-btn", "→");
+  const prev = buildCarouselArrow("prev");
+  const status = el("div", "carousel-status");
+  const next = buildCarouselArrow("next");
   nav.appendChild(prev);
   nav.appendChild(status);
   nav.appendChild(next);
@@ -410,7 +473,15 @@ function buildDatasetCarousel(dataset, examples, renderer) {
 
   function render() {
     stage.replaceChildren(renderer(examples[idx]));
-    status.textContent = `Example ${idx + 1} / ${examples.length} · ${examples[idx].mixture_id}`;
+    requestAnimationFrame(() => {
+      const h = stage.offsetHeight;
+      if (h > maxStageHeight) {
+        maxStageHeight = h;
+        stage.style.minHeight = `${maxStageHeight}px`;
+      }
+    });
+    const exId = examples[idx].mixture_id || examples[idx].sample_id || "";
+    status.textContent = `Example ${idx + 1} / ${examples.length} · ${exId}`;
   }
   prev.addEventListener("click", () => {
     idx = (idx - 1 + examples.length) % examples.length;
@@ -426,12 +497,9 @@ function buildDatasetCarousel(dataset, examples, renderer) {
 
 function renderDecompositionExample(ex) {
   const wrap = el("div", "stack");
-  const inputPanel = el("div", "panel");
-  inputPanel.appendChild(el("h4", "", "Input mixture"));
-  const inputAudio = document.createElement("audio");
-  inputAudio.controls = true;
-  inputAudio.src = ex.input_audio;
-  inputPanel.appendChild(inputAudio);
+  const inputPanel = el("div", "panel comparison-shell");
+  inputPanel.appendChild(el("h4", "input-mixture-title", "Input mixture"));
+  inputPanel.appendChild(createSiteAudioPlayer(ex.input_audio));
   wrap.appendChild(inputPanel);
 
   const laneWrap = el("div", "roll-grid");
@@ -442,28 +510,25 @@ function renderDecompositionExample(ex) {
 }
 
 function renderRoundtripExample(ex) {
-  const sub = el("div", "panel");
+  const sub = el("div", "panel comparison-shell");
   const cols = el("div", ex.idm ? "three-col" : "two-col");
   [
     ["Input", ex.input, null],
-    ["D-Composer", ex.dcomposer, ex.metrics?.dcomposer_stft_loss],
+    ["D-Composer (Ours)", ex.dcomposer, ex.metrics?.dcomposer_stft_loss],
     ["IDM", ex.idm, ex.metrics?.idm_stft_loss],
   ].forEach(([label, media, loss]) => {
     if (!media) return;
-    const pane = el("div", "panel");
+    const pane = el("div", "panel comparison-pane");
     const top = el("div", "roundtrip-pane-head");
     top.appendChild(el("h4", "", label));
-    top.appendChild(el("div", "meta", loss != null ? `MSL: ${fmt(loss)}` : " "));
+    top.appendChild(metricNode(loss));
     pane.appendChild(top);
     const img = document.createElement("img");
     img.src = media.image;
     img.alt = `${label} spectrogram`;
     img.className = "spectro";
     pane.appendChild(img);
-    const audio = document.createElement("audio");
-    audio.controls = true;
-    audio.src = media.audio;
-    pane.appendChild(audio);
+    pane.appendChild(createSiteAudioPlayer(media.audio));
     cols.appendChild(pane);
   });
   sub.appendChild(cols);
@@ -504,7 +569,7 @@ function buildDecompositionSection(data) {
   DATASET_ORDER.forEach((dataset) => {
     const examples = grouped[dataset];
     if (examples && examples.length) {
-      root.appendChild(buildDatasetCarousel(dataset, examples, renderDecompositionExample));
+      root.appendChild(buildDatasetCarousel(dataset, examples, renderDecompositionExample, { bare: true }));
     }
   });
 }
@@ -518,7 +583,7 @@ function buildRoundtripSection(data) {
   DATASET_ORDER.forEach((dataset) => {
     const examples = grouped[dataset];
     if (examples && examples.length) {
-      root.appendChild(buildDatasetCarousel(dataset, examples, renderRoundtripExample));
+      root.appendChild(buildDatasetCarousel(dataset, examples, renderRoundtripExample, { bare: true }));
     }
   });
 }
@@ -529,12 +594,9 @@ function buildOneshotSection(data) {
   if (!examples.length) return;
   root.appendChild(buildDatasetCarousel("synthetic", examples, (ex) => {
     const card = el("div", "stack");
-    const inputPanel = el("div", "panel");
-    inputPanel.appendChild(el("h4", "", "Input mixture"));
-    const mix = document.createElement("audio");
-    mix.controls = true;
-    mix.src = ex.input_audio;
-    inputPanel.appendChild(mix);
+    const inputPanel = el("div", "panel comparison-shell");
+    inputPanel.appendChild(el("h4", "input-mixture-title", "Input mixture"));
+    inputPanel.appendChild(createSiteAudioPlayer(ex.input_audio));
     card.appendChild(inputPanel);
 
     const dcompLane = ex.lanes.find((l) => l.name === "D-Composer");
@@ -546,12 +608,19 @@ function buildOneshotSection(data) {
     const grid = el("div", "oneshot-class-grid");
     gtClasses.forEach((cls) => {
       const reps = ex.oneshot_representatives[cls] || {};
-      const pane = el("div", "panel");
-      pane.appendChild(el("h4", "", cls));
+      const pane = el("div", "panel oneshot-class-pane");
+      const style = ONESHOT_CLASS_STYLES[cls];
+      if (style) {
+        pane.style.background = hexToRgba(style.border, 0.10);
+        pane.style.setProperty("--oneshot-accent", style.border);
+      }
+      const title = el("h4", "oneshot-class-title", cls.charAt(0).toUpperCase() + cls.slice(1));
+      if (style) title.style.color = style.border;
+      pane.appendChild(title);
       const rows = el("div", "oneshot-method-list");
       [
-        ["GT", reps.gt],
-        ["D-Composer", dcompPresent.has(cls) ? reps.dcomposer : null],
+        ["Ground Truth", reps.gt],
+        ["D-Composer (Ours)", dcompPresent.has(cls) ? reps.dcomposer : null],
         ["IDM", idmPresent.has(cls) ? reps.idm : null],
         ["DOSE", ["kick", "snare", "hat"].includes(cls) ? reps.dose : null],
       ].forEach(([label, path]) => {
@@ -559,6 +628,7 @@ function buildOneshotSection(data) {
         row.appendChild(el("div", "oneshot-method-name", label));
         const cell = el("div", "oneshot-method-audio");
         if (path && path.audio) {
+          row.classList.add("has-spectro");
           if (path.stft_loss != null) {
             cell.appendChild(el("div", "meta", `MSL: ${fmt(path.stft_loss)}`));
           }
@@ -569,11 +639,9 @@ function buildOneshotSection(data) {
             img.className = "spectro oneshot-spectro";
             cell.appendChild(img);
           }
-          const audio = document.createElement("audio");
-          audio.controls = true;
-          audio.src = path.audio;
-          cell.appendChild(audio);
+          cell.appendChild(createSiteAudioPlayer(path.audio, { compact: true }));
         } else {
+          row.classList.add("is-missing");
           cell.appendChild(el("span", "audio-link missing", "missing"));
         }
         row.appendChild(cell);
@@ -584,41 +652,37 @@ function buildOneshotSection(data) {
     });
     card.appendChild(grid);
     return card;
-  }));
+  }, { bare: true }));
 }
 
 function buildCodecSection(data) {
   const grid = document.getElementById("codec-grid");
   grid.appendChild(buildDatasetCarousel("codec", data.codec_examples, (ex) => {
-    const sub = el("div", "panel");
-    sub.appendChild(el("h4", "", `Logic Drums one-shot ${ex.sample_id}`));
+    const sub = el("div", "panel comparison-shell");
     const cols = el("div", "codec-grid-compact");
     [
       ["Input", ex.input],
-      ["DAC (7.7kbps)", ex.dac],
-      ["CoDiCodec (2.38kbps)", ex.codicodec],
-      ["MelodyFlow (continuous)", ex.melodyflow],
-      ["DOC (0.1kbps)", ex.autoencoder],
+      ["DAC – 7.7kbps", ex.dac],
+      ["CoDiCodec – 2.38kbps", ex.codicodec],
+      ["MelodyFlow – continuous", ex.melodyflow],
+      ["DOC (Ours) – 0.1kbps", ex.autoencoder],
     ].forEach(([label, media]) => {
-      const pane = el("div", "panel");
+      const pane = el("div", "panel comparison-pane");
       const top = el("div", "roundtrip-pane-head");
       top.appendChild(el("h4", "", label));
-      top.appendChild(el("div", "meta", media.stft_loss != null ? `MSL: ${fmt(media.stft_loss)}` : " "));
+      top.appendChild(metricNode(media.stft_loss));
       pane.appendChild(top);
       const img = document.createElement("img");
       img.src = media.image;
       img.alt = `${label} spectrogram`;
       img.className = "spectro";
       pane.appendChild(img);
-      const audio = document.createElement("audio");
-      audio.controls = true;
-      audio.src = media.audio;
-      pane.appendChild(audio);
+      pane.appendChild(createSiteAudioPlayer(media.audio));
       cols.appendChild(pane);
     });
     sub.appendChild(cols);
     return sub;
-  }));
+  }, { bare: true }));
 }
 
 fetch("assets/data/site_data.json")
@@ -633,3 +697,11 @@ fetch("assets/data/site_data.json")
   .catch((err) => {
     document.body.appendChild(el("pre", "", `Failed to load site data: ${err}`));
   });
+
+fetch("abstract.txt")
+  .then((r) => r.text())
+  .then((text) => {
+    const target = document.getElementById("abstract-text");
+    if (target) target.textContent = text.trim();
+  })
+  .catch(() => {});

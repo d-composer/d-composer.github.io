@@ -3,27 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>D-Composer Supplementary Webpage</title>
+  <title>D-Composer: Language Modeling for Simultaneous Drum Transcription and Sound Event Decomposition</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="page">
     <header class="hero">
-      <h1>D-Composer: Language Modeling for Simultaneous Drum Transcription and Sound Event Decomposition</h1>
+      <h1><span class="title-wordmark" aria-label="D-Composer">D-Composer</span>: Language Modeling for Simultaneous Drum Transcription and Sound Event Decomposition</h1>
+      <div class="hero-summary">
+        <div class="hero-video-wrap">
+          <video
+            class="hero-video"
+            src="assets/video/dcomposer_figure_animation_doc_current.mp4"
+            autoplay
+            muted
+            loop
+            playsinline
+            preload="auto"
+            controls
+          ></video>
+        </div>
+      </div>
     </header>
 
     <nav class="task-tabs" id="task-tabs">
-      <button class="task-tab active" data-panel="panel-decomposition" type="button">Decompositions</button>
-      <button class="task-tab" data-panel="panel-roundtrip" type="button">Round-trips</button>
-      <button class="task-tab" data-panel="panel-oneshot" type="button">One-shots</button>
-      <button class="task-tab" data-panel="panel-codec" type="button">Codec</button>
-      <button class="task-tab" data-panel="panel-notes" type="button">Notes / Corrections</button>
+      <button class="task-tab active" data-panel="panel-decomposition" data-label="Decompositions" type="button">Decompositions</button>
+      <button class="task-tab" data-panel="panel-roundtrip" data-label="Round-trips" type="button">Round-trips</button>
+      <button class="task-tab" data-panel="panel-oneshot" data-label="One-shots" type="button">One-shots</button>
+      <button class="task-tab" data-panel="panel-codec" data-label="Codec" type="button">Codec</button>
+      <button class="task-tab" data-panel="panel-notes" data-label="Notes / Corrections" type="button">Notes / Corrections</button>
     </nav>
 
     <section class="section task-panel active" id="panel-decomposition">
       <div class="section-head">
         <h2>One-shot Decompositions</h2>
-        <p>We provide one-shot decompositions predicted by the proposed D-Composer and baseline IDM systems, by dataset, as playable piano-roll arrangements. Click the arrows to toggle between examples within each dataset, click Play to listen to the "round-trip" reconstruction implied by the decomposition, and click on notes to listen to individual one-shot predictions.</p>
+        <p>Given a drum recording, <strong>D-Composer</strong> predicts a transcript and isolated one-shots corresponding to every note in the transcript. The baseline Inverse Drum Machine (<strong>IDM</strong>) system predicts a transcript and a single isolated one-shot per drum class. Taken together, these predictions can be thought of as "decompositions" of drum recordings into their constituent sound events.</p>
+        <p>For both D-Composer and IDM, we arrange the predicted one-shots according to the predicted transcripts in a playable piano roll format. We provide examples across five datasets, spanning both acoustic and electronic drum timbres. Click the arrows to toggle between examples within each dataset, click Play to listen to the "round-trip" reconstruction obtained by synthesizing the decomposition as audio, and click on notes to listen to individual one-shot predictions.</p>
+        <p><em>All one-shots in the piano rolls below are <u>synthesized</u>. D-Composer synthesizes unique one-shot audio for each note event, while IDM synthesizes one-shot audio for each drum class and replicates this audio (modulo volume) across all note events of the same class.</em></p>
       </div>
       <div id="decomposition-grid" class="stack"></div>
     </section>
@@ -31,7 +47,7 @@
     <section class="section task-panel" id="panel-roundtrip">
       <div class="section-head">
         <h2>Round-Trip Reconstructions</h2>
-        <p>Additional examples of "round-trip" reconstructions implied by predicted decompositions from the proposed D-Composer and baseline IDM systems. For each reconstruction, we report the multi-scale spectral loss (MSL) vs. ground truth.</p>
+        <p>Additional examples of "round-trip" reconstructions synthesized from <strong>D-Composer</strong> and <strong>IDM</strong> decompositions. For each reconstruction, we report the multi-scale spectral loss (MSL) vs. ground truth.</p>
       </div>
       <div id="roundtrip-grid" class="stack"></div>
     </section>
@@ -39,7 +55,7 @@
     <section class="section task-panel" id="panel-oneshot">
       <div class="section-head">
         <h2>One-Shot Extraction Examples</h2>
-        <p>We provide one-shot extraction examples for the proposed D-Composer and baseline IDM and DOSE baseline systems. Each input mixture is synthesized from known ground-truth (GT) one-shots of each drum class. Where the proposed or baseline methods do not predict a one-shot of a given class, we display "missing". For each predicted one-shot, we report the multi-scale spectral loss (MSL) vs. ground truth.</p>
+        <p>We provide one-shot extraction examples for the proposed <strong>D-Composer</strong> and baseline <strong>IDM</strong> and <strong>DOSE</strong> systems. Each input mixture is synthesized from known ground-truth one-shots of each drum class. Where the proposed or baseline methods do not predict a one-shot of a given class, we display "missing". For each predicted one-shot, we report the multi-scale spectral loss (MSL) vs. ground truth.</p>
       </div>
       <div id="oneshot-grid" class="stack"></div>
     </section>
@@ -47,7 +63,7 @@
     <section class="section task-panel" id="panel-codec">
       <div class="section-head">
         <h2>Codec Reconstruction Examples</h2>
-        <p>We provide example one-shot reconstructions from the proposed DOC, the baseline codecs DAC and CoDiCodec, and the continuous MelodyFlow VAE on which DOC operates.</p>
+        <p>We provide example one-shot reconstructions from the proposed <strong>DOC</strong>, the baseline codecs <strong>DAC</strong> and <strong>CoDiCodec</strong>, and the continuous <strong>MelodyFlow</strong> VAE on which DOC operates. For each reconstructed one-shot, we report the multi-scale spectral loss (MSL) vs. ground truth.</p>
       </div>
       <div id="codec-grid" class="stack"></div>
     </section>
@@ -96,6 +112,7 @@
     </section>
   </div>
 
+  <script src="audio_player.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
