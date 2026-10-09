@@ -56,6 +56,38 @@ h1 {
   white-space: nowrap;
 }
 
+.hero-authors {
+  margin: 16px 0 4px;
+  font-size: 18px;
+}
+
+.hero-venue {
+  margin: 0;
+  color: var(--muted);
+}
+
+.hero-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.hero-links a {
+  padding: 6px 16px;
+  border: 1px solid var(--text);
+  border-radius: 6px;
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.hero-links a:hover,
+.hero-links a:focus-visible {
+  background: var(--text);
+  color: var(--bg);
+}
+
 .hero-summary {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
