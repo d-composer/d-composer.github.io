@@ -57,35 +57,66 @@ h1 {
 }
 
 .hero-authors {
-  margin: 16px 0 4px;
-  font-size: 18px;
+  margin: 26px 0 8px;
+  font-size: clamp(23px, 2.3vw, 30px);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.hero-affiliation {
+  margin: 0 0 6px;
+  font-size: clamp(20px, 1.8vw, 24px);
 }
 
 .hero-venue {
   margin: 0;
+  font-size: clamp(20px, 1.6vw, 22px);
   color: var(--muted);
 }
 
 .hero-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 16px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 36px;
+  margin-top: 8px;
 }
 
 .hero-links a {
-  padding: 6px 16px;
-  border: 1px solid var(--text);
-  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0;
   color: var(--text);
+  font-family: inherit;
+  font-size: 26px;
   font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.5;
   text-decoration: none;
 }
 
-.hero-links a:hover,
+.hero-links svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hero-links a:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 4px;
+}
+
 .hero-links a:focus-visible {
-  background: var(--text);
-  color: var(--bg);
+  outline: 2px solid var(--text);
+  outline-offset: 4px;
 }
 
 .hero-summary {
@@ -93,6 +124,7 @@ h1 {
   grid-template-columns: minmax(0, 1fr);
   gap: 0;
   max-width: 1320px;
+  margin-inline: auto;
   margin-top: 34px;
 }
 
