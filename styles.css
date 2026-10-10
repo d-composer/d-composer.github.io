@@ -744,44 +744,6 @@ audio {
   object-fit: cover;
 }
 
-.notes-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.notes-table th,
-.notes-table td {
-  border-top: 1px solid var(--line);
-  padding: 8px 8px;
-  text-align: left;
-  vertical-align: middle;
-}
-
-.notes-table th {
-  color: var(--text);
-  font-weight: 700;
-  background: #F6F8F8;
-}
-
-.notes-total-row td {
-  border-top: 2px solid var(--line);
-}
-
-.correction-block + .correction-block {
-  margin-top: 30px;
-}
-
-.correction-block h3 {
-  margin: 0 0 8px;
-  font-size: 18px;
-  letter-spacing: -0.02em;
-}
-
-.correction-block p {
-  margin: 0 0 12px;
-  color: var(--text);
-}
 
 .audio-link {
   display: inline-block;

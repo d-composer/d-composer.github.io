@@ -45,7 +45,6 @@
       <button class="task-tab" data-panel="panel-roundtrip" data-label="Round-trips" type="button">Round-trips</button>
       <button class="task-tab" data-panel="panel-oneshot" data-label="One-shots" type="button">One-shots</button>
       <button class="task-tab" data-panel="panel-codec" data-label="Codec" type="button">Codec</button>
-      <button class="task-tab" data-panel="panel-notes" data-label="Notes / Corrections" type="button">Notes / Corrections</button>
     </nav>
 
     <section class="section task-panel active" id="panel-decomposition">
@@ -82,48 +81,6 @@
       <div id="codec-grid" class="stack"></div>
     </section>
 
-    <section class="section task-panel" id="panel-notes">
-      <div class="section-head">
-        <h2>Notes / Corrections</h2>
-        <div class="correction-block">
-          <h3>MusDB Dataset</h3>
-          <p>In Section 4.3 of the paper, we describe our evaluation dataset as a collection of 5500 drum recordings spanning the E-GMD, MDB-Drums, Synthetic, Freesound Loops, and MusDB datasets. However, we erroneously omitted MusDB results (500 recordings) for round-trip reconstruction from Table 3. The missing reconstruction results for MusDB are as follows:</p>
-          <table class="notes-table">
-            <thead>
-              <tr><th>Model</th><th>MSL</th></tr>
-            </thead>
-            <tbody>
-              <tr><td>D-Composer</td><td>1.63</td></tr>
-              <tr><td>IDM</td><td>1.67</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="correction-block">
-          <h3>Drum Class Counts</h3>
-          <p>In Table 1 of the paper, we provide our chosen drum vocabulary with incorrect class counts; the correct class counts are as follows:</p>
-          <table class="notes-table">
-            <thead>
-              <tr><th>MIDI</th><th>Class</th><th>Count</th></tr>
-            </thead>
-            <tbody>
-              <tr><td>36</td><td>kick</td><td>9007</td></tr>
-              <tr><td>37</td><td>rim</td><td>220</td></tr>
-              <tr><td>38</td><td>snare</td><td>6643</td></tr>
-              <tr><td>39</td><td>clap</td><td>1196</td></tr>
-              <tr><td>42</td><td>hat</td><td>4331</td></tr>
-              <tr><td>43</td><td>tom</td><td>4191</td></tr>
-              <tr><td>49</td><td>cymbal</td><td>9845</td></tr>
-              <tr><td>54</td><td>tambourine</td><td>350</td></tr>
-              <tr><td>56</td><td>cowbell</td><td>129</td></tr>
-              <tr><td>67</td><td>perc</td><td>4479</td></tr>
-              <tr><td>70</td><td>shaker</td><td>759</td></tr>
-              <tr><td>71</td><td>other</td><td>3708</td></tr>
-              <tr class="notes-total-row"><td colspan="2"><strong>Total</strong></td><td><strong>44858</strong></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
   </div>
 
   <script src="audio_player.js"></script>
